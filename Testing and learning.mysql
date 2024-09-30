@@ -1,0 +1,26 @@
+use learning;
+
+
+-- CREATE Or REPLACE TABLE product_pricing (
+--     region VARCHAR(50),
+--     product VARCHAR(50),
+--     price DECIMAL(5,2),
+--     PRIMARY KEY (region, product)
+-- );
+-- CREATE or REPLACE TABLE product_sales (
+--     region VARCHAR(50),
+--     product VARCHAR(50),
+--     num_sales INT,
+--     PRIMARY KEY (region, product)
+-- );
+
+
+
+
+
+
+Select 
+DISTINCT p.Region,p.product,
+ (price* num_sales) as total_product_sold
+ From product_pricing as p
+inner join product_sales as pp on p.region=pp.region and p.product=pp.product
