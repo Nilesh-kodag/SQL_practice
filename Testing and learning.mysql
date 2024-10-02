@@ -43,8 +43,36 @@ use learning;
 -- ('James', 'Susan'),
 -- ('John', 'Susan'),
 -- ('Terrance', 'Susan');
-\
 
+-- Hi, 
+-- Suppose a school is holding elections, with a small modification: in this voting system, students are allowed to vote for as many candidates as they like, with the caveat that each time they vote their vote is split. For example, if a given student votes for 1 candidate, that candidate receives 1 whole vote, whereas if the student votes for 2 candidates then both will receive 1/2 of a vote.
+
+
+--                     
+-- Given the following table along with the rules above, write a SQL query to determine which candidate won the election.
+
+
+--                     
+-- Table name: election_data
+
+
+--                     
+-- Voter	Candidate
+-- James	Susan
+-- James	Jerry
+-- John	Susan
+-- Lucy	Alan
+-- Terrance	Susan
+-- Terrance	Alan
+-- Howard	Jerry
+
+    
+    
+    
+    
+    
+    
+-- Solution 1                     
 with Dublicate as (
 Select Voter,count(*) FRom election_data
 Group by Voter
@@ -61,9 +89,9 @@ when Voter in (select Voter from Dublicate) then 0.5 else 1 end as vote_count
 election_data) as t
 Group by Candidate
 order by sum(vote_count) desc)
-limit 1
+limit 1;
 
-
+-- solution 2
 WITH VoteCount AS (
     SELECT 
         Voter, 
