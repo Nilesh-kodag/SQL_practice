@@ -16,11 +16,71 @@ use learning;
 
 
 
+-- CREATE Or REPLACE TABLE product_pricing (
+--     region VARCHAR(50),
+--     product VARCHAR(50),
+--     price DECIMAL(5,2),
+--     PRIMARY KEY (region, product)
+-- );
+-- CREATE or REPLACE TABLE product_sales (
+--     region VARCHAR(50),
+--     product VARCHAR(50),
+--     num_sales INT,
+--     PRIMARY KEY (region, product)
+-- );
+
+-- CREATE  TABLE election_data (
+--     Voter VARCHAR(50),
+--     Candidate VARCHAR(50)
+-- );
+
+-- INSERT INTO election_data (Voter, Candidate)
+-- VALUES
+-- ('Lucy', 'Alan'),
+-- ('Terrance', 'Alan'),
+-- ('Howard', 'Jerry'),
+-- ('James', 'Jerry'),
+-- ('James', 'Susan'),
+-- ('John', 'Susan'),
+-- ('Terrance', 'Susan');
+\
+
+with Dublicate as (
+Select Voter,count(*) FRom election_data
+Group by Voter
+Having count(*) >=2)
+
+
+Select Candidate, vote_count
+From (
+Select Candidate, sum(vote_count) as vote_count
+From(
+Select *, case 
+when Voter in (select Voter from Dublicate) then 0.5 else 1 end as vote_count 
+ From 
+election_data) as t
+Group by Candidate
+order by sum(vote_count) desc)
+limit 1
+
+
+WITH VoteCount AS (
+    SELECT 
+        Voter, 
+        Candidate, 
+        1.0 / COUNT(*) OVER (PARTITION BY Voter) AS vote_count
+    FROM election_data
+)
+SELECT Candidate, SUM(vote_count) AS total_votes
+FROM VoteCount
+GROUP BY Candidate
+ORDER BY total_votes DESC
+LIMIT 1;
 
 
 
-Select 
-DISTINCT p.Region,p.product,
- (price* num_sales) as total_product_sold
- From product_pricing as p
-inner join product_sales as pp on p.region=pp.region and p.product=pp.product
+-- Select 
+-- DISTINCT p.Region,p.product,
+--  (price* num_sales) as total_product_sold
+--  From product_pricing as p
+-- inner join product_sales as pp on p.region=pp.region and p.product=pp.product
