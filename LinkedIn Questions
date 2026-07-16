@@ -279,3 +279,71 @@ GROUP BY user_id;
 -- Q5.⁠ ⁠Detect schema changes in SCD Type 2 tables using Delta Lake
 -- ---------------------------------------------------------------------
 
+
+use learning200;
+select * FROM customer_scd;
+WITH CTE AS (
+select *,lead(address) over(partition by customer_id order by valid_from) as next_add,lead(tier) over(partition by customer_id order by valid_from) as next_tier,lead(valid_FROM) over(partition by customer_id order by valid_from ) as change_on
+ from customer_scd)
+ 
+ SELECT * FROM CTE 
+ where next_add is not null and (next_add <> address or next_tier<>tier );
+ 
+
+ -- ---------------------------------------------------------------------
+-- Q6.⁠ ⁠ ⁠Join product and transaction tables and filter out null foreign keys safely
+-- ---------------------------------------------------------------------
+SELECT t.transaction_id, t.user_id, p.product_name, t.amount, t.txn_ts
+FROM transactions t
+INNER JOIN products p ON p.product_id = t.product_id
+WHERE t.user_id IS NOT NULL
+  AND t.product_id IS NOT NULL;
+  
+  
+  
+  
+ -- ---------------------------------------------------------------------
+-- Q7.⁠ ⁠ ⁠Users who upgraded to premium within 7 days of signup
+-- ---------------------------------------------------------------------
+SELECT * fROM users
+where datediff(premium_date,signup_date)>=7;
+
+
+
+
+ -- ---------------------------------------------------------------------
+-- Q8.⁠ ⁠ ⁠⁠ ⁠Calculate cumulative distinct product purchases per customer
+-- ---------------------------------------------------------------------
+
+
+with CTE as (
+SELECT User_id,product_id,min(txn_ts) as first_broght FROM Transactions
+where User_id is not null and product_id is not null
+Group by User_id,product_id)
+
+select *,count(first_broght) over(partition by user_id order by first_broght  rows between unbounded preceding and current row) FROM cte
+;
+
+
+
+
+
+
+
+
+WITH data AS (
+    SELECT 1 AS t, 1 AS a
+    UNION ALL
+    SELECT 2, 5
+    UNION ALL
+    SELECT 3, 3
+    UNION ALL
+    SELECT 4, 5
+    UNION ALL
+    SELECT 5, 4
+    UNION ALL
+    SELECT 6, 11
+)
+
+
+SELECT *,sum(a) over(order by t rows between unbounded preceding and current row ) FROM data;
