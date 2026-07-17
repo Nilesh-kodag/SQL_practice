@@ -347,3 +347,72 @@ WITH data AS (
 
 
 SELECT *,sum(a) over(order by t rows between unbounded preceding and current row ) FROM data;
+
+ -- ---------------------------------------------------------------------
+-- Q9.⁠ ⁠ ⁠⁠ ⁠ ⁠Retrieve customers who spent above average in their region
+-- ---------------------------------------------------------------------
+use learning200;
+
+WITH customer_spend AS (
+    SELECT
+        u.user_id,
+        u.username,
+        u.region,
+        SUM(t.amount) AS total_spent
+    FROM users u
+    JOIN transactions t
+        ON t.user_id = u.user_id
+    GROUP BY
+        u.user_id,
+        u.username,
+        u.region
+),
+spend_with_avg AS (
+    SELECT
+        *,
+        AVG(total_spent) OVER (
+            PARTITION BY region
+        ) AS region_avg_spent
+    FROM customer_spend
+)
+SELECT *
+FROM spend_with_avg
+WHERE total_spent > region_avg_spent;
+
+SELECT user_id, product_id, amount, txn_ts, load_month, COUNT(*) AS dup_count
+FROM ingestion_raw
+GROUP BY user_id, product_id, amount, txn_ts, load_month
+HAVING COUNT(*) > 1;
+  -- ---------------------------------------------------------------------
+-- Q10.⁠ ⁠ ⁠⁠Row-level version (keep the surrogate key so you can DELETE the extras):
+-- ---------------------------------------------------------------------
+-- 
+WITH ranked AS (
+    SELECT row_id,
+           ROW_NUMBER() OVER (
+               PARTITION BY user_id, product_id, amount, txn_ts, load_month
+               ORDER BY row_id
+           ) AS rn
+    FROM ingestion_raw
+)
+SELECT row_id FROM ranked WHERE rn > 1;   -- these row_ids are the extra duplicates
+  
+-- ---------------------------------------------------------------------
+-- Q12. Products with declining sales 3 months in a row
+-- ---------------------------------------------------------------------
+SELECT * FROM (
+SELECT product_id, sale_month, revenue,
+           LAG(revenue,1) OVER (PARTITION BY product_id ORDER BY sale_month) AS rev_1mo_ago,
+           LAG(revenue,2) OVER (PARTITION BY product_id ORDER BY sale_month) AS rev_2mo_ago
+    FROM monthly_sales
+) as t
+where rev_2mo_ago is not null
+and rev_1mo_ago<rev_2mo_ago
+and revenue<rev_1mo_ago;
+
+
+SELECT product_id, sale_month, revenue,
+           LAG(revenue,1) OVER (PARTITION BY product_id ORDER BY sale_month) AS rev_1mo_ago,
+           LAG(revenue,2) OVER (PARTITION BY product_id ORDER BY sale_month) AS rev_2mo_ago
+    FROM monthly_sales
+    
